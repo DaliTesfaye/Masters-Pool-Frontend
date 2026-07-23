@@ -1,32 +1,60 @@
 "use client";
-// app/produits/page.tsx
 
+// app/produits/page.tsx
 import * as React from "react";
 import Link from "next/link";
-import { ShoppingBag, SlidersHorizontal, Eye } from "lucide-react";
+import { ShoppingBag, SlidersHorizontal, Eye, Loader2 } from "lucide-react";
 import { useShop } from "@/context/shop-context";
-
-// Mock Expanded Catalog Data
-const allProducts = [
-  { id: 1, name: "Queue de Billard Carbon Pro", category: "Queues", price: "420 DT", tag: "Premium", image: "/images/cue-1.jpeg" },
-  { id: 2, name: "Gant Masters Black Edition", category: "Accessoires", price: "45 DT", tag: "Top Vente", image: "/images/glove-1.jpeg" },
-  { id: 3, name: "Mallette de Transport Rigide", category: "Stockage", price: "180 DT", tag: "Nouveau", image: "/images/case-1.jpeg" },
-  { id: 4, name: "Procédé Kamui Original (M)", category: "Maintenance", price: "65 DT", tag: "Essentiel", image: "/images/tip-1.jpeg" },
-  { id: 5, name: "Queue Predator P3 Leopard", category: "Queues", price: "1250 DT", tag: "Pro Pro", image: "/images/cue-2.jpeg" },
-  { id: 6, name: "Jeu de Billes Aramith Pro-Cup", category: "Accessoires", price: "580 DT", tag: "Tournoi", image: "/images/balls.jpeg" },
-  { id: 7, name: "Craie Taom V10 Green", category: "Maintenance", price: "75 DT", tag: "Populaire", image: "/images/chalk.jpeg" },
-  { id: 8, name: "Housse Souple Masters", category: "Stockage", price: "90 DT", tag: "Eco", image: "/images/case-2.jpeg" },
-];
-
-const categories = ["Tous", "Queues", "Accessoires", "Stockage", "Maintenance"];
+import { createClient } from "@/utils/supabase/client";
 
 export default function ProduitsPage() {
+  const [products, setProducts] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const [selectedCategory, setSelectedCategory] = React.useState("Tous");
-  const { addToCart } = useShop();
+  
+  const { addToCart, setCartOpen } = useShop();
 
-  const filteredProducts = allProducts.filter(product => 
-    selectedCategory === "Tous" || product.category === selectedCategory
+  // 1. Fetch real product data from Supabase
+  React.useEffect(() => {
+    async function fetchProducts() {
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setProducts(data);
+      }
+      setLoading(false);
+    }
+
+    fetchProducts();
+  }, []);
+
+  // 2. Extract unique categories dynamically from database results
+  const categories = React.useMemo(() => {
+    const unique = Array.from(new Set(products.map((p) => p.category).filter(Boolean)));
+    return ["Tous", ...unique];
+  }, [products]);
+
+  // 3. Filter products by selected category
+  const filteredProducts = products.filter(
+    (product) => selectedCategory === "Tous" || product.category === selectedCategory
   );
+
+  const handleAddToCart = (product: any) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      price: product.price,
+      image: product.image_url || product.image,
+      tag: product.tag,
+    });
+    setCartOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-black text-white pt-28 pb-20 px-6 md:px-12 relative">
@@ -36,9 +64,8 @@ export default function ProduitsPage() {
 
       <div className="max-w-6xl mx-auto space-y-12 relative z-10">
         
-        {/* Navigation / Header Anchor using next/link */}
+        {/* Navigation / Header Anchor */}
         <div className="flex flex-col gap-6 border-b border-slate-900 pb-8">
-        
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-[0.4em] text-primary block mb-2 text-neon-glow">
@@ -63,7 +90,7 @@ export default function ProduitsPage() {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all duration-200 ${
+              className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all duration-200 cursor-pointer ${
                 selectedCategory === cat
                   ? "bg-primary text-black border-primary shadow-neon-green"
                   : "bg-[#0A0D10] text-slate-400 border-slate-900 hover:text-white hover:border-slate-800"
@@ -75,68 +102,93 @@ export default function ProduitsPage() {
         </div>
 
         {/* Products Results Display Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <div 
-              key={product.id} 
-              className="group relative flex flex-col justify-between rounded-xl bg-[#0A0D10] border border-slate-900 p-3 transition-all duration-300 hover:border-primary/20 hover:shadow-neon-green"
-            >
-              {/* Product Visual Container */}
-              <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-black border border-slate-950 flex items-center justify-center">
-                <span className="absolute top-3 left-3 z-20 text-[9px] font-bold uppercase tracking-widest bg-black/80 backdrop-blur-md text-primary border border-primary/30 px-2 py-1 rounded">
-                  {product.tag}
-                </span>
-                <img 
-                  src={product.image} 
-                  alt={product.name}
-                  className="w-full h-full object-cover transition duration-500 group-hover:scale-105 opacity-80"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=400";
-                  }}
-                />
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div 
+                key={n} 
+                className="h-72 rounded-xl bg-[#0A0D10] border border-slate-900 animate-pulse flex items-center justify-center"
+              >
+                <Loader2 className="w-5 h-5 text-slate-700 animate-spin" />
               </div>
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="text-center py-16 border border-slate-900 rounded-xl bg-[#0A0D10]">
+            <p className="text-xs uppercase tracking-widest text-slate-500 font-mono">
+              Aucun produit trouvé dans cette catégorie.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => {
+              const imageUrl = product.image_url || product.image || "/placeholder.jpg";
+              const formattedPrice = typeof product.price === "number" ? `${product.price} DT` : product.price;
 
-              {/* Text & Meta Details Info */}
-              <div className="mt-4 px-1 pb-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">
-                  {product.category}
-                </span>
-                
-                {/* Product Name wraps cleanly in a detail routing link too */}
-                <Link href={`/produits/${product.id}`}>
-                  <h3 className="text-sm font-bold text-white tracking-wide uppercase truncate transition duration-200 hover:text-primary">
-                    {product.name}
-                  </h3>
-                </Link>
-                
-                <div className="flex justify-between items-center mt-4 pt-2 border-t border-slate-950">
-                  <span className="text-sm font-black text-white font-mono tracking-tight">
-                    {product.price}
-                  </span>
-                  
-                  {/* Action group containing dynamic details link and standard cart button */}
-                  <div className="flex items-center gap-1.5">
-                    <Link 
-                      href={`/produits/${product.id}`}
-                      className="text-slate-400 hover:text-primary transition-colors duration-200 p-1.5 hover:bg-slate-950/60 rounded-md"
-                      title="Voir le produit"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </Link>
-                    <button 
-                      onClick={() => addToCart(product)}
-                      className="text-slate-400 hover:text-primary transition-colors duration-200 p-1.5 hover:bg-slate-950/60 rounded-md"
-                      title="Ajouter au panier"
-                    >
-                      <ShoppingBag className="w-4 h-4" />
-                    </button>
+              return (
+                <div 
+                  key={product.id} 
+                  className="group relative flex flex-col justify-between rounded-xl bg-[#0A0D10] border border-slate-900 p-3 transition-all duration-300 hover:border-primary/20 hover:shadow-neon-green"
+                >
+                  {/* Product Visual Container */}
+                  <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-black border border-slate-950 flex items-center justify-center">
+                    {product.tag && (
+                      <span className="absolute top-3 left-3 z-20 text-[9px] font-bold uppercase tracking-widest bg-black/80 backdrop-blur-md text-primary border border-primary/30 px-2 py-1 rounded">
+                        {product.tag}
+                      </span>
+                    )}
+                    <img 
+                      src={imageUrl} 
+                      alt={product.name}
+                      className="w-full h-full object-cover transition duration-500 group-hover:scale-105 opacity-80"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?auto=format&fit=crop&q=80&w=400";
+                      }}
+                    />
                   </div>
-                </div>
-              </div>
 
-            </div>
-          ))}
-        </div>
+                  {/* Text & Meta Details Info */}
+                  <div className="mt-4 px-1 pb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 block mb-1">
+                      {product.category}
+                    </span>
+                    
+                    <Link href={`/produits/${product.id}`}>
+                      <h3 className="text-sm font-bold text-white tracking-wide uppercase truncate transition duration-200 hover:text-primary">
+                        {product.name}
+                      </h3>
+                    </Link>
+                    
+                    <div className="flex justify-between items-center mt-4 pt-2 border-t border-slate-950">
+                      <span className="text-sm font-black text-white font-mono tracking-tight">
+                        {formattedPrice}
+                      </span>
+                      
+                      {/* Action group */}
+                      <div className="flex items-center gap-1.5">
+                        <Link 
+                          href={`/produits/${product.id}`}
+                          className="text-slate-400 hover:text-primary transition-colors duration-200 p-1.5 hover:bg-slate-950/60 rounded-md"
+                          title="Voir le produit"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                        <button 
+                          onClick={() => handleAddToCart(product)}
+                          className="text-slate-400 hover:text-primary transition-colors duration-200 p-1.5 hover:bg-slate-950/60 rounded-md cursor-pointer"
+                          title="Ajouter au panier"
+                        >
+                          <ShoppingBag className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              );
+            })}
+          </div>
+        )}
 
       </div>
     </div>

@@ -67,7 +67,7 @@ export default function Navbar() {
             size="icon"
             className="text-muted-foreground hover:text-primary h-9 w-9 transition-colors duration-200"
           >
-            <Link href="#login">
+            <Link href="/login">
               <User className="w-4 h-4" />
             </Link>
           </Button>

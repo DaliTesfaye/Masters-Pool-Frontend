@@ -4,7 +4,9 @@ import * as React from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { CheckCircle2, ArrowRight, ShieldCheck, Clock } from "lucide-react";
 
-export default function OrderConfirmedPage() {
+import { Loader2 } from "lucide-react";
+
+function OrderConfirmedContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams.get("orderId");
@@ -80,5 +82,19 @@ export default function OrderConfirmedPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function OrderConfirmedPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-[#000000] text-white flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        </div>
+      }
+    >
+      <OrderConfirmedContent />
+    </React.Suspense>
   );
 }

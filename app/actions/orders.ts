@@ -6,7 +6,16 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export async function checkoutOrder() {
+export interface CheckoutInput {
+  fullName: string;
+  email: string;
+  phone: string;
+  address?: string;
+  deliveryMethod: "club" | "delivery";
+  paymentType: string;
+}
+
+export async function checkoutOrder(input: CheckoutInput) {
   const supabase = await createClient();
 
   // 1. Verify user session
@@ -19,6 +28,13 @@ export async function checkoutOrder() {
     return {
       success: false,
       error: "Vous devez être connecté pour passer une commande.",
+    };
+  }
+
+  if (!input || !input.fullName || !input.email || !input.phone) {
+    return {
+      success: false,
+      error: "Veuillez remplir toutes les informations client requises.",
     };
   }
 
@@ -42,18 +58,26 @@ export async function checkoutOrder() {
     }
 
     // 3. Calculate the overall total amount spent
-    const totalAmount = cartItems.reduce(
+    const subtotal = cartItems.reduce(
       (sum, item) => sum + Number(item.product_price || 0) * item.quantity,
       0
     );
+    const deliveryFee = input.deliveryMethod === "delivery" ? 8 : 0;
+    const totalAmount = subtotal + deliveryFee;
 
-    // 4. Create the main record inside the 'orders' table (status: 'email_pending')
+    // 4. Create the main record inside the 'orders' table (status: 'pending')
     const { data: orderData, error: orderError } = await supabase
       .from("orders")
       .insert({
         user_id: user.id,
+        full_name: input.fullName,
+        email: input.email,
+        phone_number: input.phone,
+        address: input.address || "",
+        delivery_method: input.deliveryMethod,
+        payment_method: input.paymentType,
         total_amount: totalAmount,
-        status: "pending", // Set to initial email verification state
+        status: "pending", // Initial state awaiting email verification
       })
       .select("id")
       .single();
@@ -100,11 +124,12 @@ export async function checkoutOrder() {
     // 8. Send Confirmation Email via Resend
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const confirmUrl = `${appUrl}/api/orders/verify?orderId=${newOrderId}`;
+    const targetEmail = input.email || user.email;
 
     try {
       await resend.emails.send({
         from: "onboarding@resend.dev", // Free Resend testing domain
-        to: user.email,
+        to: targetEmail,
         subject: "Confirmation de votre commande - Masters Pool",
         html: `
           <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #000000; color: #ffffff; padding: 32px; border-radius: 12px; max-width: 500px; margin: auto; border: 1px solid #1e293b;">
@@ -113,7 +138,7 @@ export async function checkoutOrder() {
               <p style="color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px;">Validation de commande</p>
             </div>
 
-            <p style="font-size: 14px; color: #cbd5e1; line-height: 1.6;">Bonjour,</p>
+            <p style="font-size: 14px; color: #cbd5e1; line-height: 1.6;">Bonjour <strong>${input.fullName}</strong>,</p>
             <p style="font-size: 14px; color: #cbd5e1; line-height: 1.6;">
               Merci pour votre commande ! Pour confirmer votre e-mail et démarrer la préparation de votre matériel pour la commande <strong style="color: #ffffff;">#${newOrderId.slice(-6)}</strong>, veuillez cliquer sur le bouton ci-dessous :
             </p>
@@ -133,7 +158,6 @@ export async function checkoutOrder() {
       });
     } catch (emailErr) {
       console.error("[checkoutOrder] Resend email dispatch failed:", emailErr);
-      // We log but don't fail the whole function since the order is already saved in DB
     }
 
     // 9. Revalidate paths

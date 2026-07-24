@@ -20,11 +20,15 @@ interface OrderDetails {
   status: OrderStatus;
   total_amount?: number;
   created_at?: string;
+  full_name?: string;
+  email?: string;
+  phone_number?: string;
   delivery_method?: string;
+  payment_method?: string;
   address?: string;
 }
 
-export default function OrderConfirmationPage() {
+function OrderConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
 
@@ -65,7 +69,11 @@ export default function OrderConfirmationPage() {
             status: data.status,
             total_amount: data.total_amount,
             created_at: data.created_at,
+            full_name: data.full_name,
+            email: data.email,
+            phone_number: data.phone_number,
             delivery_method: data.delivery_method,
+            payment_method: data.payment_method,
             address: data.address,
           });
           setError(null);
@@ -94,20 +102,20 @@ export default function OrderConfirmationPage() {
     {
       weight: 1,
       title: "Commande Enregistrée",
-      activeText: "En attente de confirmation",
-      desc: "Votre demande a été reçue et est en cours de validation.",
+      activeText: "En attente de confirmation e-mail",
+      desc: "Vos informations client ont été enregistrées en base de données. Un email de confirmation vous a été envoyé pour valider la commande.",
     },
     {
       weight: 2,
       title: "Préparation & Traitement",
-      activeText: "En cours de préparation",
-      desc: "L'équipe prépare votre matériel et configure vos accès.",
+      activeText: "En cours de traitement",
+      desc: "L'équipe Masters Pool prépare votre matériel pour la livraison ou le retrait.",
     },
     {
       weight: 3,
       title: "Commande Finalisée",
-      activeText: "Terminé 100%",
-      desc: "Votre commande est prête / vous a été remise en main propre.",
+      activeText: "Livré / Prêt",
+      desc: "Votre commande est prête ou vous a été remise en main propre.",
     },
   ];
 
@@ -137,7 +145,7 @@ export default function OrderConfirmationPage() {
           </div>
 
           <span className="text-xs font-bold uppercase tracking-[0.3em] text-emerald-400 block">
-            Suivi de Commande
+            Suivi & Progression de Commande
           </span>
 
           <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-white">
@@ -158,7 +166,7 @@ export default function OrderConfirmationPage() {
           <div className="bg-[#0A0D10]/30 border border-slate-900 rounded-xl p-6 text-left space-y-6">
             <div className="flex justify-between items-center border-b border-slate-900 pb-3">
               <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Progression
+                Statut Actuel
               </h3>
               {order?.total_amount && (
                 <span className="text-xs font-mono font-bold text-emerald-400">
@@ -231,16 +239,57 @@ export default function OrderConfirmationPage() {
           </div>
         )}
 
+        {/* Client & Order Summary Card */}
+        {order && (
+          <div className="p-6 rounded-xl border border-slate-900 bg-[#0A0D10]/40 text-left space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-400 border-b border-slate-900 pb-2">
+              Détails du Client & Commande Enregistrée
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-slate-500 font-medium block">Nom complet:</span>
+                <span className="text-white font-bold">{order.full_name || "Client"}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium block">Adresse E-mail:</span>
+                <span className="text-white font-mono">{order.email || "-"}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium block">Téléphone:</span>
+                <span className="text-white font-mono">{order.phone_number || "-"}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium block">Mode de Récupération:</span>
+                <span className="text-emerald-400 font-semibold uppercase">
+                  {order.delivery_method === "delivery" ? "Livraison à domicile" : "Retrait au Club"}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium block">Mode de Règlement:</span>
+                <span className="text-white uppercase font-medium">
+                  {order.delivery_method === "delivery" ? "Cash à la livraison" : "Cash au retrait (Club)"}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium block">Adresse de livraison:</span>
+                <span className="text-slate-300 font-light">
+                  {order.address || "Retrait direct à Masters Pool"}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Info Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
           <div className="p-4 rounded-xl border border-slate-900 bg-[#0A0D10]/20 flex gap-3 items-start">
             <MapPin className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
             <div>
               <h5 className="text-xs font-bold uppercase text-slate-400 tracking-wide mb-1">
-                Adresse
+                Adresse Club
               </h5>
               <p className="text-xs font-light text-slate-500 leading-relaxed">
-                {order?.address || "Club Masters Pool\nTunis, Tunisie"}
+                Club Masters Pool, Tunis, Tunisie
               </p>
             </div>
           </div>
@@ -248,7 +297,7 @@ export default function OrderConfirmationPage() {
             <Calendar className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
             <div>
               <h5 className="text-xs font-bold uppercase text-slate-400 tracking-wide mb-1">
-                Horaires
+                Horaires d'Ouverture
               </h5>
               <p className="text-xs font-light text-slate-500 leading-relaxed">
                 7j/7 — De 10:00 à 00:00
@@ -263,7 +312,7 @@ export default function OrderConfirmationPage() {
             onClick={() => (window.location.href = "/")}
             className="w-full sm:w-auto px-8 h-12 bg-emerald-500 text-black font-bold uppercase tracking-widest text-xs rounded-lg shadow-[0_4px_20px_rgba(16,185,129,0.25)] hover:bg-emerald-400 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer"
           >
-            Retour au Tableau de Bord <ArrowRight className="w-4 h-4" />
+            Retour à l'Accueil <ArrowRight className="w-4 h-4" />
           </button>
         </div>
 
@@ -272,5 +321,19 @@ export default function OrderConfirmationPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen bg-[#000000] text-white flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+        </div>
+      }
+    >
+      <OrderConfirmationContent />
+    </React.Suspense>
   );
 }

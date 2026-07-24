@@ -34,24 +34,8 @@ export default function CartDrawer() {
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-    setErrorMessage(null);
-
-    startTransition(async () => {
-      const result = await checkoutOrder();
-
-      if (result.success) {
-        // 1. Instantly clear out local client context data
-        clearLocalCart();
-        
-        // 2. Hide the side panel interface sheet
-        setCartOpen(false);
-        
-        // 3. Smooth transition to the order confirmation page
-        router.push(`/checkout/success?orderId=${result.orderId}`);
-      } else {
-        setErrorMessage(result.error || "Une erreur est survenue lors de la validation.");
-      }
-    });
+    setCartOpen(false);
+    router.push("/checkout");
   };
 
   return (

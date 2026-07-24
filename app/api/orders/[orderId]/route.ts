@@ -17,7 +17,7 @@ export async function GET(
 
     const { data: order, error } = await supabase
       .from("orders")
-      .select("id, status")
+      .select("id, status, total_amount, created_at, full_name, email, phone_number, address, delivery_method, payment_method")
       .eq("id", orderId)
       .single();
 
@@ -32,6 +32,14 @@ export async function GET(
     return NextResponse.json({
       orderId: order.id,
       status: order.status,
+      total_amount: order.total_amount,
+      created_at: order.created_at,
+      full_name: order.full_name,
+      email: order.email,
+      phone_number: order.phone_number,
+      address: order.address,
+      delivery_method: order.delivery_method,
+      payment_method: order.payment_method,
     });
   } catch (error) {
     console.error("Supabase route error:", error);

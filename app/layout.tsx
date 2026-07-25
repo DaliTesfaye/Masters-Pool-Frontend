@@ -20,10 +20,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn(inter.variable, "font-sans antialiased")}>
+      <body className={cn(inter.variable, "font-sans antialiased bg-black text-white")}>
         <ShopProvider>
           <Navbar />
-          {children}
+          {/* Add a main wrapper with padding-top to prevent navbar overlap on all pages */}
+          <main className="pt-20 min-h-screen">
+            {children}
+          </main>
           <CartDrawer />
         </ShopProvider>
       </body>

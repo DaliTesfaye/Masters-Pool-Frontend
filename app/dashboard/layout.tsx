@@ -20,6 +20,16 @@ export default async function DashboardLayout({
     redirect('/login')
   }
 
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  if (profileData?.role === "admin") {
+    redirect("/admin")
+  }
+
   const navItems = [
     { label: 'Accueil', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Mon Profil', href: '/dashboard/profile', icon: User },
@@ -29,9 +39,9 @@ export default async function DashboardLayout({
   ]
 
   return (
-    <div className="min-h-[calc(100vh-64px)] pt-16 bg-black text-white flex select-none">
+    <div className="min-h-[calc(100vh-80px)] bg-black text-white flex select-none">
       
-      <aside className="w-64 bg-[#0A0D10]/40 border-r border-slate-900 flex flex-col justify-between p-5 pt-8 backdrop-blur-md sticky top-16 h-[calc(100vh-64px)] shrink-0">
+      <aside className="w-64 bg-[#0A0D10]/40 border-r border-slate-900 flex flex-col justify-between p-5 pt-6 backdrop-blur-md sticky top-20 h-[calc(100vh-80px)] shrink-0">
         <div className="space-y-8">
           
           <div className="flex items-center gap-2.5 px-2">
@@ -71,9 +81,9 @@ export default async function DashboardLayout({
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 overflow-y-auto pt-12 p-6 md:p-10 relative">
+      <main className="flex-1 min-w-0 overflow-y-auto pt-8 pb-8 pr-6 pl-4 md:pr-10 md:pl-6 relative">
         <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-cyan-500/5 blur-[150px] rounded-full pointer-events-none" />
-        <div className="relative z-10 max-w-5xl mx-auto">
+        <div className="relative z-10 w-full max-w-6xl">
           {children}
         </div>
       </main>

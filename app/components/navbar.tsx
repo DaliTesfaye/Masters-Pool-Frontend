@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, User } from "lucide-react";
+import { ShoppingBag, User, LayoutDashboard, LogOut, UserPlus } from "lucide-react";
 import { useShop } from "@/context/shop-context";
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
+import { logout } from "@/app/auth/actions";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -14,6 +17,28 @@ const navItems = [
 export default function Navbar() {
   const { setCartOpen, cart } = useShop();
   const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-glass">
@@ -62,15 +87,42 @@ export default function Navbar() {
             )}
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-muted-foreground hover:text-primary h-9 w-9 transition-colors duration-200"
-          >
-            <Link href="/login">
-              <User className="w-4 h-4" />
-            </Link>
-          </Button>
+          {isLoggedIn ? (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-primary h-9 w-9 transition-colors duration-200"
+                title="Tableau de bord"
+              >
+                <Link href="/dashboard">
+                  <LayoutDashboard className="w-4 h-4" />
+                </Link>
+              </Button>
+              <form action={logout}>
+                <Button
+                  type="submit"
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-rose-500 h-9 w-9 transition-colors duration-200"
+                  title="Se déconnecter"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </form>
+            </>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-muted-foreground hover:text-primary h-9 w-9 transition-colors duration-200"
+              title="Créer un compte / Se connecter"
+            >
+              <Link href="/signup">
+                <UserPlus className="w-4 h-4" />
+              </Link>
+            </Button>
+          )}
         </div>
 
       </nav>

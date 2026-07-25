@@ -14,9 +14,19 @@ export default async function DashboardOverviewPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name')
+    .select('full_name, phone_number, address')
     .eq('id', user.id)
     .single()
+
+  const { count: activeOrdersCount } = await supabase
+    .from('orders')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .neq('status', 'cancelled')
+
+  const isProfileComplete = Boolean(
+    profile?.full_name && profile?.phone_number && profile?.address
+  )
 
   return (
     <div className="space-y-8">
@@ -43,19 +53,23 @@ export default async function DashboardOverviewPage() {
         <div className="bg-[#0A0D10]/40 border border-slate-900 rounded-xl p-5 flex items-center justify-between backdrop-blur-md">
           <div className="space-y-1">
             <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Statut Profil</p>
-            <p className="text-sm font-bold text-slate-200">Configuration active</p>
+            <p className={`text-sm font-bold ${isProfileComplete ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {isProfileComplete ? 'Complet' : 'Incomplet'}
+            </p>
           </div>
-          <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-900 text-cyan-400">
+          <div className={`p-2.5 rounded-lg border ${isProfileComplete ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
             <User className="w-5 h-5" />
           </div>
         </div>
 
         <div className="bg-[#0A0D10]/40 border border-slate-900 rounded-xl p-5 flex items-center justify-between backdrop-blur-md">
           <div className="space-y-1">
-            <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Commandes en cours</p>
-            <p className="text-sm font-bold text-slate-200">0 commandes actives</p>
+            <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Commandes actives</p>
+            <p className="text-sm font-bold text-slate-200">
+              {activeOrdersCount || 0} commande{activeOrdersCount === 1 ? '' : 's'} en cours
+            </p>
           </div>
-          <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-900 text-slate-400">
+          <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-900 text-cyan-400">
             <ShoppingBag className="w-5 h-5" />
           </div>
         </div>

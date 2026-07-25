@@ -12,14 +12,14 @@ import {
 
 // Mock local room images - Replace these with paths to your actual venue photos
 const localImages = [
-  { src: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS8ZrVryoITsWpSlcyrqClpcGLEkTzgjh0ALn0UnxzhFkAjrYz5_J0Haus&s=10", alt: "Salle Billard Tables" },
-  { src: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&q=80&w=1600", alt: "Lounge Ambiance" },
+  { src: "/bg1.jpeg", alt: "Salle Billard Tables" },
+  { src: "/bg2.jpeg", alt: "Lounge Ambiance" },
 ];
 
 export default function HeroSection() {
-  // Configures the slider to jump images every 3000ms (3 seconds)
+  // Configures the slider to jump images every 4000ms (4 seconds)
   const plugin = React.useRef(
-    Autoplay({ delay: 3000, stopOnInteraction: false })
+    Autoplay({ delay: 4000, stopOnInteraction: false })
   );
 
   return (
@@ -59,8 +59,8 @@ export default function HeroSection() {
         </span>
 
         <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter uppercase text-white leading-none">
-          Jouer Comme <br />
-          <span className="text-primary text-neon-glow">Un Master</span>
+          Break The <br />
+          <span className="text-primary text-neon-glow">Feeling</span>
         </h1>
 
         <p className="mt-6 text-sm sm:text-base text-slate-300 max-w-lg font-light leading-relaxed">

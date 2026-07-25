@@ -116,7 +116,9 @@ export default async function AdminDashboardPage() {
                               </span>
                             </span>
                             <span className="font-mono">
-                              {item.price_at_purchase ? `${item.price_at_purchase} TND` : ""}
+                              {item.price_at_purchase
+                                ? `${item.price_at_purchase} TND`
+                                : ""}
                             </span>
                           </div>
                         );
@@ -134,40 +136,68 @@ export default async function AdminDashboardPage() {
                 </div>
 
                 {/* Status Actions */}
+                {/* Status Actions */}
                 <div className="w-full lg:w-auto flex items-center justify-between lg:justify-end border-t lg:border-t-0 border-slate-900 pt-4 lg:pt-0">
-                  <details className="relative group">
-                    <summary className="list-none cursor-pointer bg-slate-900 text-slate-300 border border-slate-800 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-slate-800 transition-colors">
-                      <span className={`w-2 h-2 rounded-full ${
-                        order.status === 'completed' ? 'bg-emerald-500' :
-                        order.status === 'processing' ? 'bg-amber-500' :
-                        order.status === 'cancelled' ? 'bg-rose-500' : 'bg-blue-500'
-                      }`}></span>
-                      {order.status || "pending"} <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-70 group-open:rotate-180 transition-transform" />
-                    </summary>
-                    <div className="absolute right-0 lg:-right-2 mt-2 w-48 bg-[#0F1318] border border-slate-800 rounded-xl shadow-xl shadow-black/50 p-1 z-20 flex flex-col gap-0.5">
-                      {["pending", "processing", "completed", "cancelled"].map((status) => {
-                        const updateAction = updateOrderStatus.bind(null, order.id, status);
-                        const isActive = order.status === status || (!order.status && status === "pending");
-                        
-                        return (
-                          <form key={status} action={updateAction}>
-                            <button
-                              type="submit"
-                              className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg flex items-center justify-between transition-colors
-                                ${isActive ? "bg-slate-800/60 text-white" : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"}
-                              `}
-                            >
-                              {status === "pending" && "En attente"}
-                              {status === "processing" && "En préparation"}
-                              {status === "completed" && "Livré / Complété"}
-                              {status === "cancelled" && "Annulé"}
-                              {isActive && <Check className="w-3.5 h-3.5 text-primary" />}
-                            </button>
-                          </form>
-                        );
-                      })}
+                  {order.status === "completed" ? (
+                    // Locked badge when status is completed
+                    <div className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                      <Check className="w-3.5 h-3.5" />
+                      Completed
                     </div>
-                  </details>
+                  ) : (
+                    // Interactive dropdown for active/pending statuses
+                    <details className="relative group">
+                      <summary className="list-none cursor-pointer bg-slate-900 text-slate-300 border border-slate-800 px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-slate-800 transition-colors">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            order.status === "processing"
+                              ? "bg-amber-500"
+                              : order.status === "cancelled"
+                                ? "bg-rose-500"
+                                : "bg-blue-500"
+                          }`}
+                        ></span>
+                        {order.status || "pending"}{" "}
+                        <ChevronDown className="w-3.5 h-3.5 ml-1 opacity-70 group-open:rotate-180 transition-transform" />
+                      </summary>
+                      <div className="absolute right-0 lg:-right-2 mt-2 w-48 bg-[#0F1318] border border-slate-800 rounded-xl shadow-xl shadow-black/50 p-1 z-20 flex flex-col gap-0.5">
+                        {[
+                          "pending",
+                          "processing",
+                          "completed",
+                          "cancelled",
+                        ].map((status) => {
+                          const updateAction = updateOrderStatus.bind(
+                            null,
+                            order.id,
+                            status,
+                          ) as any;
+                          const isActive =
+                            order.status === status ||
+                            (!order.status && status === "pending");
+
+                          return (
+                            <form key={status} action={updateAction}>
+                              <button
+                                type="submit"
+                                className={`w-full text-left px-3 py-2 text-[10px] font-bold uppercase tracking-wider rounded-lg flex items-center justify-between transition-colors
+                  ${isActive ? "bg-slate-800/60 text-white" : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"}
+                `}
+                              >
+                                {status === "pending" && "En attente"}
+                                {status === "processing" && "En préparation"}
+                                {status === "completed" && "Livré / Complété"}
+                                {status === "cancelled" && "Annulé"}
+                                {isActive && (
+                                  <Check className="w-3.5 h-3.5 text-primary" />
+                                )}
+                              </button>
+                            </form>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  )}
                 </div>
               </div>
             ))}

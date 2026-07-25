@@ -165,7 +165,7 @@ export default async function OrdersPage() {
                   <div className="flex items-center gap-4">
                     {/* BUTTON TO 3 STEPS PAGE */}
                     <Link 
-                      href={`/produits/confirmation?id=${order.id}`}
+                      href={`/checkout/success?orderId=${order.id}`}
                       className="inline-flex items-center gap-1.5 px-3 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[10px] font-black uppercase tracking-wide hover:bg-cyan-500/20 transition-all cursor-pointer"
                     >
                       Voir statut

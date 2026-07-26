@@ -114,8 +114,8 @@ function OrderConfirmationContent() {
     {
       weight: 3,
       title: "Commande Finalisée",
-      activeText: "Livré / Prêt",
-      desc: "Votre commande est prête ou vous a été remise en main propre.",
+      activeText: "Livré / Complétée",
+      desc: "Votre commande est livrée et complétée.",
     },
   ];
 
@@ -185,10 +185,10 @@ function OrderConfirmationContent() {
                     <div className="flex flex-col items-center shrink-0">
                       <div
                         className={`w-6 h-6 rounded-full border text-xs font-black flex items-center justify-center font-mono transition-all duration-300 ${
-                          isActive
-                            ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
-                            : isCompleted
+                          isCompleted || (currentWeight === 3 && step.weight === 3)
                             ? "bg-emerald-500 border-emerald-500 text-black"
+                            : isActive
+                            ? "bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
                             : "bg-slate-950 border-slate-800 text-slate-500"
                         }`}
                       >
